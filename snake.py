@@ -24,7 +24,7 @@ class Snake:
         self.grid = grid_o
         self.body_cells = [ (startpos[0]-i,startpos[1]) for i in range(0,length) ]
         self.score = 0
-        self.direction = (1,0)
+        self.direction = QueuedValue((1,0))
         self.last_active = time.time()
         self.move_delay = 0.250
         self.expanding = 0
@@ -45,7 +45,8 @@ class Snake:
             x1,y1 = pos1
             x2,y2 = pos2
             return (x1+x2,y1+y2)
-        next_cell = pos_sum(self.body_cells[0],self.direction)
+        direction = self.direction.get()
+        next_cell = pos_sum(self.body_cells[0],direction)
         if next_cell in self.collectibles:
             self.expanding += 1
             self.collectibles.remove(next_cell)
@@ -70,14 +71,15 @@ class Snake:
         x,y = new_direction
         if(x < -1 or y < -1 or x > 1 or y > 1 or ((x+y) != 1 and (x+y) != -1)):
             return False
+        direction = self.direction.observe()
         '''If direction is the same do nothing'''
-        if(self.direction == new_direction):
+        if(direction == new_direction):
             return False
         '''If direction is reverse do nothing'''
-        if(self.direction[0] + new_direction[0] == 0 and \
-           self.direction[1] + new_direction[1] == 0):
+        if(direction[0] + new_direction[0] == 0 and \
+           direction[1] + new_direction[1] == 0):
             return False
-        self.direction = new_direction
+        self.direction.set(new_direction)
         return True
 
     def propagate(self):
@@ -94,6 +96,23 @@ class Snake:
         for c in self.collectibles:
             self.grid.set_cell_state(c,self.collectible_color)
         self.grid.draw(screen)
+
+
+class QueuedValue:
+    '''Contains a value that can be queued for change or observed or get
+    queued value remain unobservable before get request'''
+    def __init__(self,val):
+        self.queued = val
+        self.val = val
+
+    def set(self,val):
+        self.queued=val
+
+    def get(self):
+        self.val = self.queued
+        return self.val
+    def observe(self):
+        return self.val
 
 def main():
     pygame.init()
