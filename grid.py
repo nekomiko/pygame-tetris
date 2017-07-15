@@ -6,6 +6,10 @@ class Grid:
     '''Grid object, representing colored grid
        with ability to draw it on Surface
    '''
+    empty_color = "#FFFFFF"
+    border_color = "#404040"
+    active_color = "#FF00FF"
+
     def __init__(self,size,cell_size = 10, cell_border=1, topleft=(0,0)):
         '''size: (width , height) dimensions of grid in cellsi
         cell_size: size of side of cell
@@ -45,9 +49,6 @@ class Grid:
                            for x in range(size[0]) ]
         self.update()
 
-    empty_color = "#FFFFFF"
-    border_color = "#000000"
-    active_color = "#FF00FF"
     def _cell_coord_to_rect(self,n,m):
         '''Converts (column,row) coordinates of cell to Rect'''
         return Rect((self.cell_border*(n+1)+self.cell_size*n,\

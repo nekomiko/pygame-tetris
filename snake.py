@@ -8,7 +8,10 @@ class SnakeCollision(Exception):
     pass
 
 class Snake:
-    '''Snake object'''
+    '''Snake object
+    self.status:
+        game_active
+        game_over'''
     cell_color = "#FF00FF"
     collectible_color = "#00FF00"
     def __init__(self,grid_o,length=3,startpos=(-1,-1)):
@@ -21,15 +24,25 @@ class Snake:
         self.expanding: number of moves left which increasing size of snake'''
         if(startpos == (-1,-1)):
             startpos = ( grid_o.size[0] // 2, grid_o.size[1] // 2)
+        self.length = length
+        self.startpos = startpos
         self.grid = grid_o
-        self.body_cells = [ (startpos[0]-i,startpos[1]) for i in range(0,length) ]
+        self.move_delay = 0.250
+        self.gameover_delay = 1
+        self.reinit_round()
+    def reinit_round(self):
+        self.score = 0
+        self.body_cells = [ (self.startpos[0]-i,self.startpos[1]) for i in range(0,self.length) ]
         self.score = 0
         self.direction = QueuedValue((1,0))
         self.last_active = time.time()
-        self.move_delay = 0.250
         self.expanding = 0
         self.collectibles = []
         self.place_new_collectible()
+        self.status = "game_active"
+
+
+
     def place_new_collectible(self):
         if len(self.body_cells) >= self.grid.size[0] * self.grid.size[1]:
             return None
@@ -84,10 +97,19 @@ class Snake:
 
     def propagate(self):
         c_time = time.time()
-        steps = int((c_time - self.last_active) / self.move_delay)
-        for i in range(0,steps):
-            self.last_active += self.move_delay
-            self.make_next_step()
+        if self.status == "game_active":
+            steps = int((c_time - self.last_active) / self.move_delay)
+            try:
+                for i in range(0,steps):
+                    self.last_active += self.move_delay
+                    self.make_next_step()
+            except SnakeCollision:
+                self.status = "game_over"
+        elif self.status == "game_over":
+            if self.last_active + self.gameover_delay < c_time:
+                self.reinit_round()
+
+
 
     def draw(self,screen):
         self.grid.clear()
@@ -96,6 +118,63 @@ class Snake:
         for c in self.collectibles:
             self.grid.set_cell_state(c,self.collectible_color)
         self.grid.draw(screen)
+
+
+class Score:
+    def __init__(self,pos,length):
+        '''pos: top left coordinate of score box
+        lenght: number of digits in score indicator'''
+        self.pos = pos
+        self.length = length
+        self.font = pygame.font.SysFont("monospace", 24)
+        self.val = 0
+
+    def set(self,val):
+        self.val = val
+
+    def draw(self,screen):
+        score_surf = self.font.render("Score: " + str(self.val).zfill(self.length), 1, Color("#101010"))
+        screen.blit(score_surf,self.pos)
+
+class SnakeGame:
+    def __init__(self,screen):
+        self.screen = screen
+        self.background = pygame.Surface(screen.get_size())
+        self.background = self.background.convert()
+        self.background.fill(Color("#808080"))
+        self.grid = Grid((30,30),10,1,(20,10))
+        self.snake = Snake(self.grid)
+        self.score = Score((400,10),8)
+        self.running = True
+        self.gameover = False
+
+    def update(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                self.running = False
+            elif event.type == KEYDOWN:
+                if event.key == K_UP or event.key == K_w:
+                    self.snake.set_direction((0,-1))
+                if event.key == K_DOWN or event.key == K_s:
+                    self.snake.set_direction((0,1))
+                if event.key == K_LEFT or event.key == K_a:
+                    self.snake.set_direction((-1,0))
+                if event.key == K_RIGHT or event.key == K_d:
+                    self.snake.set_direction((1,0))
+
+        self.snake.propagate()
+        self.score.set(self.snake.score)
+
+    def draw(self):
+        self.screen.blit(self.background,(0,0))
+        self.score.draw(self.screen)
+        self.snake.draw(self.screen)
+
+
+
+
+
+
 
 
 class QueuedValue:
@@ -116,39 +195,15 @@ class QueuedValue:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((800,600))
+    screen = pygame.display.set_mode((650,350))
     pygame.display.set_caption("Snake")
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    background.fill(Color("#808080"))
-    screen.blit(background,background.get_rect())
-    grid = Grid((30,30),10,1,(20,10))
-    grid.cell_data[0][0] = grid.active_color
-    snake = Snake(grid)
-
-    screen.blit(grid.image, grid.rect)
-    pygame.display.flip()
-
+    game = SnakeGame(screen)
     clock = pygame.time.Clock()
-    running = True
-    counter = 0
-    while running:
-        clock.tick(60)
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                running = False
-            elif event.type == KEYDOWN:
-                if event.key == K_UP or event.key == K_w:
-                    snake.set_direction((0,-1))
-                if event.key == K_DOWN or event.key == K_s:
-                    snake.set_direction((0,1))
-                if event.key == K_LEFT or event.key == K_a:
-                    snake.set_direction((-1,0))
-                if event.key == K_RIGHT or event.key == K_d:
-                    snake.set_direction((1,0))
 
-        snake.propagate()
-        snake.draw(screen)
+    while game.running:
+        clock.tick(60)
+        game.update()
+        game.draw()
         pygame.display.flip()
 
 if __name__ == "__main__": main()
