@@ -28,7 +28,8 @@ class Snake:
         self.startpos = startpos
         self.grid = grid_o
         self.move_delay = 0.250
-        self.gameover_delay = 1
+        self.gameover_blink_delay = 0.1
+        self.gameover_blinks = 10
         self.reinit_round()
     def reinit_round(self):
         self.score = 0
@@ -40,6 +41,8 @@ class Snake:
         self.collectibles = []
         self.place_new_collectible()
         self.status = "game_active"
+        self.blink_status = True
+        self.blinks_made = 0
 
 
 
@@ -98,25 +101,41 @@ class Snake:
     def propagate(self):
         c_time = time.time()
         if self.status == "game_active":
-            steps = int((c_time - self.last_active) / self.move_delay)
             try:
-                for i in range(0,steps):
+                if self.last_active + self.move_delay < c_time:
                     self.last_active += self.move_delay
                     self.make_next_step()
             except SnakeCollision:
                 self.status = "game_over"
         elif self.status == "game_over":
-            if self.last_active + self.gameover_delay < c_time:
-                self.reinit_round()
+            if self.last_active + self.gameover_blink_delay < c_time:
+                self.last_active += self.gameover_blink_delay
+                if self.blinks_made >= self.gameover_blinks:
+                    self.reinit_round()
+
+                self.blink_status = not self.blink_status
+                self.blinks_made += 1
+
+    def draw_body(self):
+        for c in self.body_cells:
+            self.grid.set_cell_state(c,self.cell_color)
+
+
 
 
 
     def draw(self,screen):
         self.grid.clear()
-        for c in self.body_cells:
-            self.grid.set_cell_state(c,self.cell_color)
-        for c in self.collectibles:
-            self.grid.set_cell_state(c,self.collectible_color)
+        #Handle blinking after gameover
+        if self.status == "game_over":
+            if self.blink_status:
+                self.draw_body()
+
+        else:
+            self.draw_body()
+            for c in self.collectibles:
+                self.grid.set_cell_state(c,self.collectible_color)
+
         self.grid.draw(screen)
 
 
