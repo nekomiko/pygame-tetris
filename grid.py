@@ -10,7 +10,7 @@ class Grid:
     border_color = "#404040"
     active_color = "#FF00FF"
 
-    def __init__(self,size,cell_size = 10, cell_border=1, topleft=(0,0)):
+    def __init__(self, size, cell_size=10, cell_border=1, topleft=(0, 0)):
         '''size: (width , height) dimensions of grid in cellsi
         cell_size: size of side of cell
         cell_border: border size of outline of cells
@@ -34,90 +34,92 @@ class Grid:
         self.size = size
         self.cell_size = cell_size
         self.cell_border = cell_border
-        surface_width = self.size[0]*(self.cell_size+self.cell_border)+ \
+        surface_width = self.size[0] * (self.cell_size + self.cell_border) + \
             self.cell_border
-        surface_height = self.size[1]*(self.cell_size+self.cell_border)+ \
+        surface_height = self.size[1] * (self.cell_size + self.cell_border) + \
             self.cell_border
-        self.image = pygame.Surface((surface_width,surface_height))
+        self.image = pygame.Surface((surface_width, surface_height))
         self.image.fill(Color(self.border_color))
         self.rect = self.image.get_rect()
         self.rect.topleft = topleft
-        self.cell_data = [ [None for y in range(size[1])] for x in range(size[0])]
-        self._cell_surfaces = [ [pygame.Surface((self.cell_size, self.cell_size)) \
-                              for y in range(size[1])] for x in range(size[0]) ]
-        self._cell_rects = [ [self._cell_coord_to_rect(x,y) for y in range(size[1])] \
-                           for x in range(size[0]) ]
+        self.cell_data = [
+            [None for y in range(size[1])] for x in range(size[0])]
+        self._cell_surfaces = [[pygame.Surface((self.cell_size, self.cell_size))
+                                for y in range(size[1])] for x in range(size[0])]
+        self._cell_rects = [[self._cell_coord_to_rect(x, y) for y in range(size[1])]
+                            for x in range(size[0])]
         self.update()
 
-    def _cell_coord_to_rect(self,n,m):
+    def _cell_coord_to_rect(self, n, m):
         '''Converts (column,row) coordinates of cell to Rect'''
-        return Rect((self.cell_border*(n+1)+self.cell_size*n,\
-            self.cell_border*(m+1)+self.cell_size*m),\
-            (self.cell_size,self.cell_size))
+        return Rect((self.cell_border * (n + 1) + self.cell_size * n,
+                     self.cell_border * (m + 1) + self.cell_size * m),
+                    (self.cell_size, self.cell_size))
+
     def _draw_cell_surfaces(self):
         for x in range(self.size[0]):
             for y in range(self.size[1]):
                 color = self.cell_data[x][y] if self.cell_data[x][y] else self.empty_color
                 self._cell_surfaces[x][y].fill(Color(color))
-                self.image.blit(self._cell_surfaces[x][y],self._cell_rects[x][y])
+                self.image.blit(
+                    self._cell_surfaces[x][y], self._cell_rects[x][y])
 
     def update(self):
         '''Redraw self.image'''
         self._draw_cell_surfaces()
 
-    def abs_coord_to_cell(self,pos):
+    def abs_coord_to_cell(self, pos):
         '''Takes absolute display coordinates and
         gives cell(column,row) containing them'''
-        def in_range(n,m,x):
+        def in_range(n, m, x):
             return n <= x <= m
-        x,y = pos
-        x -= self.rect.left + (self.cell_border//2)
-        y -= self.rect.top + (self.cell_border//2)
+        x, y = pos
+        x -= self.rect.left + (self.cell_border // 2)
+        y -= self.rect.top + (self.cell_border // 2)
         bordered_cell = self.cell_border + self.cell_size
-        retpos = (x//bordered_cell, y//bordered_cell)
-        if in_range(0,self.size[0],retpos[0]) and in_range(0,self.size[1],retpos[1]):
+        retpos = (x // bordered_cell, y // bordered_cell)
+        if in_range(0, self.size[0], retpos[0]) and in_range(0, self.size[1], retpos[1]):
             return retpos
         else:
             return None
-    def set_cell_state(self,pos,color_str):
+
+    def set_cell_state(self, pos, color_str):
         '''Sets color of the cell with `pos` coordinated
         pos: 2-tuple (c,r)
         color_str: color in #XXXXXX format'''
-        x,y = pos
+        x, y = pos
         self.cell_data[x][y] = color_str
-    def flip_color(self,pos):
+
+    def flip_color(self, pos):
         '''Flips color in cell with pos (colomun,row) coordinates'''
-        x,y = pos
+        x, y = pos
         if(self.cell_data[x][y]):
             self.cell_data[x][y] = None
         else:
             self.cell_data[x][y] = self.active_color
+
     def clear(self):
         '''Clears self.cell_data inplace'''
         for x in range(self.size[0]):
             for y in range(self.size[1]):
                 self.cell_data[x][y] = None
-    def draw(self,screen):
+
+    def draw(self, screen):
         '''Draws grid on screen'''
         self.update()
         screen.blit(self.image, self.rect)
 
 
-
-
-
-
-
 def main():
     '''Click-cell-to-activate interactive demo'''
     pygame.init()
-    screen = pygame.display.set_mode((800,600))
+    screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Test Grid")
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill(Color("#808080"))
-    screen.blit(background,background.get_rect())
-    grid = Grid((20,20),10,1,(20,10))
+    screen.blit(background, background.get_rect())
+    grid = Grid((20, 20), 10, 1, (20, 10))
     grid.cell_data[0][0] = grid.active_color
 
     screen.blit(grid.image, grid.rect)
@@ -138,6 +140,6 @@ def main():
         grid.draw(screen)
         pygame.display.flip()
 
-if __name__ == "__main__": main()
 
-
+if __name__ == "__main__":
+    main()
