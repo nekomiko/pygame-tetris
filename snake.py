@@ -11,11 +11,12 @@ class SnakeCollision(Exception):
     pass
 
 
-class Snake:
+class SnakeModel:
     '''Snake object
-    self.status:
+    self.status values:
         game_active
         game_over'''
+
     cell_color = "#FF00FF"
     collectible_color = "#00FF00"
 
@@ -38,6 +39,7 @@ class Snake:
         self.reinit_round()
 
     def reinit_round(self):
+        '''Reinitialization of game after start or gameover'''
         self.score = 0
         self.body_cells = [(self.startpos[0] - i, self.startpos[1])
                            for i in range(0, self.length)]
@@ -52,6 +54,7 @@ class Snake:
         self.blinks_made = 0
 
     def place_new_collectible(self):
+        '''Places snake body piece at random location'''
         if len(self.body_cells) >= self.grid.size[0] * self.grid.size[1]:
             return None
         while True:
@@ -62,6 +65,7 @@ class Snake:
                 return cell
 
     def make_next_step(self):
+        '''Updates model: hadles snakes's next move'''
         def pos_sum(pos1, pos2):
             x1, y1 = pos1
             x2, y2 = pos2
@@ -89,6 +93,8 @@ class Snake:
         self.body_cells = new_cells_list
 
     def set_direction(self, new_direction):
+        '''Changes direction of snake,
+        handles validation and opposite direction cases'''
         x, y = new_direction
         if(x < -1 or y < -1 or x > 1 or y > 1 or ((x + y) != 1 and (x + y) != -1)):
             return False
@@ -104,6 +110,7 @@ class Snake:
         return True
 
     def propagate(self):
+        '''Handles time, gamestatuses and calls model update'''
         c_time = time.time()
         if self.status == "game_active":
             try:
@@ -122,11 +129,12 @@ class Snake:
                 self.blinks_made += 1
 
     def draw_body(self):
+        '''Draws snake's body cells on the grid'''
         for c in self.body_cells:
             self.grid.set_cell_state(c, self.cell_color)
 
-    def draw(self, screen):
-        self.grid.clear()
+    def draw(self):
+        '''Draws snake and other objects on grid'''
         # Handle blinking after gameover
         if self.status == "game_over":
             if self.blink_status:
@@ -136,8 +144,6 @@ class Snake:
             self.draw_body()
             for c in self.collectibles:
                 self.grid.set_cell_state(c, self.collectible_color)
-
-        self.grid.draw(screen)
 
 
 class Score:
@@ -165,12 +171,13 @@ class SnakeGame:
         self.background = self.background.convert()
         self.background.fill(Color("#808080"))
         self.grid = Grid((30, 30), 10, 1, (20, 10))
-        self.snake = Snake(self.grid)
+        self.snake = SnakeModel(self.grid)
         self.score = Score((400, 10), 8)
         self.running = True
         self.gameover = False
 
     def update(self):
+        '''Handles input and SnakeModel, Score update'''
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
@@ -188,27 +195,33 @@ class SnakeGame:
         self.score.set(self.snake.score)
 
     def draw(self):
+        '''Draws game objects on screen'''
         self.screen.blit(self.background, (0, 0))
         self.score.draw(self.screen)
-        self.snake.draw(self.screen)
+        self.grid.clear()
+        self.snake.draw()
+        self.grid.draw(self.screen)
 
 
 class QueuedValue:
-    '''Contains a value that can be queued for change or observed or get
-    queued value remain unobservable before get request'''
+    '''Contains a value that can be queued for change or observed or get,
+    queued value remains unobservable before get request'''
 
     def __init__(self, val):
         self.queued = val
         self.val = val
 
     def set(self, val):
+        '''Queue value for change'''
         self.queued = val
 
     def get(self):
+        '''Updates value with queued and returns new'''
         self.val = self.queued
         return self.val
 
     def observe(self):
+        '''Ignores queued value, returns old'''
         return self.val
 
 
