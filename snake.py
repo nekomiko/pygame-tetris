@@ -52,6 +52,15 @@ class SnakeModel:
         self.status = "game_active"
         self.blink_status = True
         self.blinks_made = 0
+        self.pause_status = False
+
+    def pause_toggle(self):
+        self.pause_status = not self.pause_status
+        self.last_active = time.time()
+        # if self.status == "game_active":
+        #    self.status = "game_paused"
+        # elif self.status == "game_paused":
+        #    self.status == "game_active"
 
     def place_new_collectible(self):
         '''Places snake body piece at random location'''
@@ -112,7 +121,7 @@ class SnakeModel:
     def propagate(self):
         '''Handles time, gamestatuses and calls model update'''
         c_time = time.time()
-        if self.status == "game_active":
+        if self.status == "game_active" and (not self.pause_status):
             try:
                 if self.last_active + self.move_delay < c_time:
                     self.last_active += self.move_delay
@@ -147,12 +156,15 @@ class SnakeModel:
 
 
 class Score:
-    def __init__(self, pos, length):
+    def __init__(self, pos, length, fontface, fontsize, fontcolor):
         '''pos: top left coordinate of score box
         lenght: number of digits in score indicator'''
         self.pos = pos
         self.length = length
-        self.font = pygame.font.SysFont("monospace", 24)
+        self.fontface = fontface
+        self.fontsize = fontsize
+        self.fontcolor = fontcolor
+        self.font = pygame.font.SysFont(fontface, fontsize)
         self.val = 0
 
     def set(self, val):
@@ -160,21 +172,34 @@ class Score:
 
     def draw(self, screen):
         score_surf = self.font.render(
-            "Score: " + str(self.val).zfill(self.length), 1, Color("#101010"))
+            "Score: " + str(self.val).zfill(self.length), 1, self.fontcolor)
         screen.blit(score_surf, self.pos)
 
 
 class SnakeGame:
+    fontface = "monospace"
+    fontsize = 24
+    fontcolor = Color("#101010")
+    background_color = Color("#808080")
+
     def __init__(self, screen):
         self.screen = screen
         self.background = pygame.Surface(screen.get_size())
         self.background = self.background.convert()
-        self.background.fill(Color("#808080"))
+        self.background.fill(self.background_color)
         self.grid = Grid((30, 30), 10, 1, (20, 10))
         self.snake = SnakeModel(self.grid)
-        self.score = Score((400, 10), 8)
+        self.score = Score((400, 10), 8, self.fontface,
+                           self.fontsize, self.fontcolor)
         self.running = True
         self.gameover = False
+        font = pygame.font.SysFont(self.fontface, self.fontsize)
+        self.pause_surf = font.render("Paused", 1, self.fontcolor)
+
+    def draw_pause_screen(self):
+        '''Shows pause status if paused'''
+        if self.snake.pause_status:
+            self.screen.blit(self.pause_surf, (400, 300))
 
     def update(self):
         '''Handles input and SnakeModel, Score update'''
@@ -182,14 +207,20 @@ class SnakeGame:
             if event.type == QUIT:
                 self.running = False
             elif event.type == KEYDOWN:
-                if event.key == K_UP or event.key == K_w:
-                    self.snake.set_direction((0, -1))
-                if event.key == K_DOWN or event.key == K_s:
-                    self.snake.set_direction((0, 1))
-                if event.key == K_LEFT or event.key == K_a:
-                    self.snake.set_direction((-1, 0))
-                if event.key == K_RIGHT or event.key == K_d:
-                    self.snake.set_direction((1, 0))
+                if self.snake.status == "game_active":
+                    if event.key == K_UP or event.key == K_w:
+                        self.snake.set_direction((0, -1))
+
+                    if event.key == K_DOWN or event.key == K_s:
+                        self.snake.set_direction((0, 1))
+
+                    if event.key == K_LEFT or event.key == K_a:
+                        self.snake.set_direction((-1, 0))
+
+                    if event.key == K_RIGHT or event.key == K_d:
+                        self.snake.set_direction((1, 0))
+                    if event.key == K_SPACE or event.key == K_p:
+                        self.snake.pause_toggle()
 
         self.snake.propagate()
         self.score.set(self.snake.score)
@@ -200,6 +231,7 @@ class SnakeGame:
         self.score.draw(self.screen)
         self.grid.clear()
         self.snake.draw()
+        self.draw_pause_screen()
         self.grid.draw(self.screen)
 
 
