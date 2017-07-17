@@ -90,6 +90,13 @@ class Grid:
         x, y = pos
         self.cell_data[x][y] = color_str
 
+    def get_cell_state(self,pos):
+        x ,y = pos
+        return self.cell_data[x][y]
+
+    def get_size(self):
+        return self.size
+
     def flip_color(self, pos):
         '''Flips color in cell with pos (colomun,row) coordinates'''
         x, y = pos

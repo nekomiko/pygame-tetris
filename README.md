@@ -1,7 +1,8 @@
 # pygame-tetris
 ### Description
-Planned as collection of classic games. Includes only snake currently.
+Clone of two classic games: tetris and snake.
 ### Dependencies
 Can be installed using: `pip3 install -r requirements.txt`.
 ### Usage
-`pyghon3 snake.py`
+`python3 snake.py`
+`python3 tetris.py`

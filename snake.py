@@ -3,6 +3,7 @@ from pygame.locals import *
 
 
 from grid import Grid
+from game import Score
 import time
 import random
 
@@ -43,7 +44,6 @@ class SnakeModel:
         self.score = 0
         self.body_cells = [(self.startpos[0] - i, self.startpos[1])
                            for i in range(0, self.length)]
-        self.score = 0
         self.direction = QueuedValue((1, 0))
         self.last_active = time.time()
         self.expanding = 0
@@ -57,10 +57,6 @@ class SnakeModel:
     def pause_toggle(self):
         self.pause_status = not self.pause_status
         self.last_active = time.time()
-        # if self.status == "game_active":
-        #    self.status = "game_paused"
-        # elif self.status == "game_paused":
-        #    self.status == "game_active"
 
     def place_new_collectible(self):
         '''Places snake body piece at random location'''
@@ -154,28 +150,6 @@ class SnakeModel:
             for c in self.collectibles:
                 self.grid.set_cell_state(c, self.collectible_color)
 
-
-class Score:
-    def __init__(self, pos, length, fontface, fontsize, fontcolor):
-        '''pos: top left coordinate of score box
-        lenght: number of digits in score indicator'''
-        self.pos = pos
-        self.length = length
-        self.fontface = fontface
-        self.fontsize = fontsize
-        self.fontcolor = fontcolor
-        self.font = pygame.font.SysFont(fontface, fontsize)
-        self.val = 0
-
-    def set(self, val):
-        self.val = val
-
-    def draw(self, screen):
-        score_surf = self.font.render(
-            "Score: " + str(self.val).zfill(self.length), 1, self.fontcolor)
-        screen.blit(score_surf, self.pos)
-
-
 class SnakeGame:
     fontface = "monospace"
     fontsize = 24
@@ -187,8 +161,8 @@ class SnakeGame:
         self.background = pygame.Surface(screen.get_size())
         self.background = self.background.convert()
         self.background.fill(self.background_color)
-        self.grid = Grid((30, 30), 10, 1, (20, 10))
-        self.snake = SnakeModel(self.grid)
+        self.grid = Grid((20, 20), 15, 1, (20, 10))
+        self.game = SnakeModel(self.grid)
         self.score = Score((400, 10), 8, self.fontface,
                            self.fontsize, self.fontcolor)
         self.running = True
@@ -198,7 +172,7 @@ class SnakeGame:
 
     def draw_pause_screen(self):
         '''Shows pause status if paused'''
-        if self.snake.pause_status:
+        if self.game.pause_status:
             self.screen.blit(self.pause_surf, (400, 300))
 
     def update(self):
@@ -207,30 +181,30 @@ class SnakeGame:
             if event.type == QUIT:
                 self.running = False
             elif event.type == KEYDOWN:
-                if self.snake.status == "game_active":
+                if self.game.status == "game_active":
                     if event.key == K_UP or event.key == K_w:
-                        self.snake.set_direction((0, -1))
+                        self.game.set_direction((0, -1))
 
                     if event.key == K_DOWN or event.key == K_s:
-                        self.snake.set_direction((0, 1))
+                        self.game.set_direction((0, 1))
 
                     if event.key == K_LEFT or event.key == K_a:
-                        self.snake.set_direction((-1, 0))
+                        self.game.set_direction((-1, 0))
 
                     if event.key == K_RIGHT or event.key == K_d:
-                        self.snake.set_direction((1, 0))
+                        self.game.set_direction((1, 0))
                     if event.key == K_SPACE or event.key == K_p:
-                        self.snake.pause_toggle()
+                        self.game.pause_toggle()
 
-        self.snake.propagate()
-        self.score.set(self.snake.score)
+        self.game.propagate()
+        self.score.set(self.game.score)
 
     def draw(self):
         '''Draws game objects on screen'''
         self.screen.blit(self.background, (0, 0))
         self.score.draw(self.screen)
         self.grid.clear()
-        self.snake.draw()
+        self.game.draw()
         self.draw_pause_screen()
         self.grid.draw(self.screen)
 
@@ -273,3 +247,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
