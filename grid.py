@@ -90,8 +90,8 @@ class Grid:
         x, y = pos
         self.cell_data[x][y] = color_str
 
-    def get_cell_state(self,pos):
-        x ,y = pos
+    def get_cell_state(self, pos):
+        x, y = pos
         return self.cell_data[x][y]
 
     def get_size(self):

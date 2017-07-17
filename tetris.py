@@ -55,8 +55,10 @@ def preprocess_figures(figures_unproc):
 
 FIGURES = preprocess_figures(FIGURES_unproc)
 
+
 class TetrisGameOver(Exception):
     pass
+
 
 class TetrisModel:
     cell_color = "#FF00FF"
@@ -77,8 +79,6 @@ class TetrisModel:
         self.pause_status = False
         self.status = "game_active"
 
-
-
     def pause_toggle(self):
         self.pause_status = not self.pause_status
         self.last_active = time.time()
@@ -93,7 +93,7 @@ class TetrisModel:
         next_figure = self.random_figure()
         figure_pos = (
             (self.grid.size[0] - len(self.next_figure)) // 2, 0)
-        if self.collides(next_figure,figure_pos):
+        if self.collides(next_figure, figure_pos):
             raise TetrisGameOver
         self.current_figure = self.next_figure
         self.next_figure = next_figure
@@ -102,21 +102,21 @@ class TetrisModel:
     def rotation_move(self):
         '''Rotates current figure'''
         new_figure = rotate_figure(self.current_figure)
-        if self.collides(new_figure,self.figure_pos):
+        if self.collides(new_figure, self.figure_pos):
             return False
         else:
             self.current_figure = new_figure
             return True
-    def side_move(self,dir):
-        self.move((dir,0))
 
     def collides(self, figure, pos):
         '''Checks collision of figure at the position (pos) with the occupied cells'''
         for i in range(len(figure)):
             for j in range(len(figure[0])):
                 if figure[i][j] != " ":
-                    in_range_i = (pos[0] + i >= 0) and (pos[0] + i < self.grid.size[0])
-                    in_range_j = (pos[1] + j >= 0) and (pos[1] + j < self.grid.size[1])
+                    in_range_i = (
+                        pos[0] + i >= 0) and (pos[0] + i < self.grid.size[0])
+                    in_range_j = (
+                        pos[1] + j >= 0) and (pos[1] + j < self.grid.size[1])
                     if (not in_range_i) or (not in_range_j) or self.placed_cells[pos[0] + i][pos[1] + j]:
                         return True
         return False
@@ -135,7 +135,7 @@ class TetrisModel:
         def remove_line(line_num):
             for i in range(len(self.placed_cells)):
                 self.placed_cells[i][0] = None
-                for j in range(line_num - 1,0,-1):
+                for j in range(line_num - 1, 0, -1):
                     self.placed_cells[i][j + 1] = self.placed_cells[i][j]
 
         def remove_full_lines():
@@ -172,12 +172,12 @@ class TetrisModel:
         '''Handles time, gamestatuses and calls model update'''
         c_time = time.time()
         if self.status == "game_active" and (not self.pause_status):
-           try:
-               if self.last_active + self.move_delay < c_time:
-                   self.last_active += self.move_delay
-                   self.make_next_step()
-           except TetrisGameOver:
-               self.status = "game_over"
+            try:
+                if self.last_active + self.move_delay < c_time:
+                    self.last_active += self.move_delay
+                    self.make_next_step()
+            except TetrisGameOver:
+                self.status = "game_over"
         elif self.status == "game_over":
             self.reinit_round()
 
@@ -199,6 +199,8 @@ class TetrisGame:
     fontsize = 24
     fontcolor = Color("#101010")
     background_color = Color("#808080")
+    initial_delay = 0.10
+    repeat_delay = 0.05
 
     def __init__(self, screen):
         self.screen = screen
@@ -212,6 +214,8 @@ class TetrisGame:
         self.running = True
         font = pygame.font.SysFont(self.fontface, self.fontsize)
         self.pause_surf = font.render("Paused", 1, self.fontcolor)
+        pygame.key.set_repeat(int(self.initial_delay * 1000),
+                              int(self.repeat_delay * 1000))
 
     def draw_pause_screen(self):
         '''Shows pause status if paused'''
@@ -228,9 +232,11 @@ class TetrisGame:
                     if event.key == K_UP or event.key == K_w:
                         self.game.rotation_move()
                     if event.key == K_LEFT or event.key == K_a:
-                        self.game.side_move(-1)
+                        self.game.move((-1, 0))
                     if event.key == K_RIGHT or event.key == K_d:
-                        self.game.side_move(1)
+                        self.game.move((1, 0))
+                    if event.key == K_DOWN or event.key == K_s:
+                        self.game.move((0, 1))
                     if event.key == K_SPACE or event.key == K_p:
                         self.game.pause_toggle()
 

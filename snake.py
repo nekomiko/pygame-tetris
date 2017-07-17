@@ -150,6 +150,7 @@ class SnakeModel:
             for c in self.collectibles:
                 self.grid.set_cell_state(c, self.collectible_color)
 
+
 class SnakeGame:
     fontface = "monospace"
     fontsize = 24
@@ -247,4 +248,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

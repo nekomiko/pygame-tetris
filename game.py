@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+
+
 class Score:
     def __init__(self, pos, length, fontface, fontsize, fontcolor):
         '''pos: top left coordinate of score box
@@ -19,5 +21,3 @@ class Score:
         score_surf = self.font.render(
             "Score: " + str(self.val).zfill(self.length), 1, self.fontcolor)
         screen.blit(score_surf, self.pos)
-
-
